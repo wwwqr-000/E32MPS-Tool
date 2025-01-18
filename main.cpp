@@ -1,6 +1,7 @@
 #include <iostream>
 #include <windows.h>
 #include <fstream>
+#include <vector>
 
 #include "classes/resource.h"
 #include "classes/dllmethods.hpp"
@@ -16,7 +17,7 @@ void setTmpPath(std::string& path) {
 void createUsefulBuff(std::string& buff) {
     std::string finalBuff = "";
     for (char& c : buff) {
-        if (std::isalnum(c) || c == '\\' || c == '/' || c == '_' || c == ' ' || c == '.' || c == '-' || c == '(' || c == ')' || c == '+' || c == '=' || c == ',' || c == ';' || c == '\'' || c == '!' || c == '$' || c == '&' || c == '@' || c == '^' || c == '~' || c == '[' || c == ']' || c == '{' || c == '}' || c == ':') {
+        if (std::isalnum(c) || c == '\\' || c == '/' || c == '_' || c == ' ' || c == '.' || c == '-' || c == '(' || c == ')' || c == '+' || c == '=' || c == ',' || c == ';' || c == '\'' || c == '!' || c == '$' || c == '&' || c == '@' || c == '^' || c == '~' || c == '[' || c == ']' || c == '{' || c == '}' || c == ':' || c == '\n') {
             finalBuff += c;
         }
     }
@@ -71,7 +72,7 @@ int main() {
     std::cin >> serPort;
     std::cout << "\nTrying to connect with COM" << serPort << "...\n";
 
-    std::string cmd = "f = open('E32MPS.txt', 'w'); f.write('createde'); f.close();";
+    std::string cmd = "f = open('E32MPS.txt', 'w'); f.write('live file sync by E32MPS-Tool (https://github.com/wwwqr-000/E32MPS-Tool)'); f.close();";
     if (!sendCmd(cmd, serPort, buff)) {
         cls();
         std::cout << "Could not finish test command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
@@ -83,6 +84,96 @@ int main() {
     std::cout << "Connected to device trough COM" << serPort << ".\n\n";
 
     while (true) {
+        dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
+        createUsefulBuff(buff);
+        if (buff == "File Not Found") {
+            system("mkdir workspace");
+            continue;
+        }
 
+        std::string lines = buff;
+        buff = "";
+
+        std::string tmpLine = "";
+        std::vector<std::string> files;
+        for (char& c : lines) {
+            if (c == '\n') {
+                files.push_back(tmpLine);
+                tmpLine = "";
+                continue;
+            }
+            if (c == '\\') {
+                c = '/';
+            }
+            tmpLine += c;
+        }
+
+        for (std::string& filePath : files) {
+            std::string realFilePath = "./workspace/" + filePath;
+            std::string fileContents = "";
+            bool isFolder = false;
+            tmpLine = "";
+            std::ifstream file(realFilePath);
+            if (!file.is_open()) {
+                bool invertedFolderCheck = true;
+                //Check if 'file' is folder
+                for (char& c : filePath) {
+                    if (c == '.') {
+                        invertedFolderCheck = false;
+                        break;
+                    }
+                }
+                if (invertedFolderCheck) {
+                    std::cout << filePath << " is a folder...\n";
+                    isFolder = true;
+                }
+                else {
+                    std::cout << "Could not open file " << realFilePath << ". Skipping...\n";
+                    continue;
+                }
+                //
+            }
+
+            std::string cmd = "";
+
+            if (!isFolder) {//Get content out of file
+                while (std::getline(file, tmpLine)) {
+                    std::string realTmpLine = "";
+                    int charIndex = -1;
+                    for (char& c : tmpLine) {
+                        ++charIndex;
+                        bool newLnFound = false;
+                        if (c == '\n') {
+                            try {//If this \n really is the last char of the line
+                                char test = tmpLine[charIndex + 1];
+                            }
+                            catch (std::exception) {
+                                realTmpLine += "; ";
+                                continue;
+                            }
+                        }
+                        else {
+                            realTmpLine += c;
+                        }
+
+                    }
+                    fileContents += realTmpLine;
+                }
+                cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
+            }
+            else {
+                cmd = "import uos; uos.mkdir('" + filePath + "')";
+            }
+
+            std::cout << cmd << "\n";
+            if (!sendCmd(cmd, serPort, buff)) {
+                cls();
+                std::cout << "Could not finish test command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
+                wait();
+                return 2;
+            }
+
+            file.close();
+        }
     }
 }
