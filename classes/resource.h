@@ -1,0 +1,7 @@
+#ifndef HEADER_F3981DF9877E70B8
+#define HEADER_F3981DF9877E70B8
+
+#define ASSET_WHITEAVOCADO_DLL 1
+
+#endif // header guard
+

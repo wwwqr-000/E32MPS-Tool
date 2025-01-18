@@ -1,0 +1,3 @@
+#include "classes/resource.h"
+
+ASSET_WHITEAVOCADO_DLL RCDATA "data/whiteavocado64.dll"
