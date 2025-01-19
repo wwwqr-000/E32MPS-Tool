@@ -7,6 +7,7 @@
 
 #include "classes/resource.h"
 #include "classes/dllmethods.hpp"
+#include "classes/deletedFiles.hpp"
 
 DLL_METHODS dllMethods;
 
@@ -75,6 +76,44 @@ void replaceStr(std::string &str, std::string oldSubstring, std::string newSubst
     }
 }
 
+bool fileInList(const std::string& file, const std::vector<std::string>& vecList) {
+    for (std::string s : vecList) {
+        if (s == file) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::string> getMissingFiles(const std::vector<std::string>& files, const std::vector<std::string>& prevFiles) {
+    std::vector<std::string> deletedFilesVec;
+
+    for (int y = 0; y < prevFiles.size(); y++) {//For the previous vector, containing the missing files
+        bool found = false;
+        for (int x = 0; x < files.size(); x++) {//For the vector of files missing files
+            if (prevFiles[y] == files[x]) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            deletedFilesVec.push_back(prevFiles[y]);
+        }
+    }
+
+    return deletedFilesVec;
+}
+
+deletedFiles filesGotDeleted(const std::vector<std::string>& files, const std::vector<std::string>& prevFiles) {
+    std::vector<std::string> deletedFilesVec = getMissingFiles(files, prevFiles);
+
+    if (prevFiles.size() < files.size()) {//A file got added
+        return deletedFiles(false, deletedFilesVec);
+    }
+
+    return deletedFiles(deletedFilesVec.size() > 0, deletedFilesVec);
+}
+
 int main() {
     //echo f = open('test.txt', 'w'); f.write('test123'); f.close(); > COMx
     std::string dllName = "whiteavocado64.dll";
@@ -107,6 +146,8 @@ int main() {
     cls();
     std::cout << "Connected to device trough COM" << serPort << ".\n\n";
 
+    std::vector<std::string> prevFiles;//Files from prev loop
+
     while (true) {
         dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
         createUsefulBuff(buff);
@@ -131,6 +172,15 @@ int main() {
             }
             tmpLine += c;
         }
+
+        //Check for deleted files or folders
+        deletedFiles delFiles = filesGotDeleted(files, prevFiles);
+        if (delFiles.deleted()) {
+            std::cout << "Files got deleted...\n";
+        }
+        //
+
+        prevFiles = files;
 
         for (std::string& filePath : files) {
             std::string realFilePath = "./workspace/" + filePath;
@@ -191,7 +241,7 @@ int main() {
                 cmd = "import uos; uos.mkdir('" + filePath + "')";
             }
 
-            std::cout << cmd << "\n";
+            //std::cout << cmd << "\n";
 
             if (!sendCommandUsingFile(cmd, serPort, buff)) {
                 cls();
