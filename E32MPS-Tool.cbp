@@ -32,6 +32,9 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Linker>
+			<Add option="-static" />
+		</Linker>
 		<Unit filename="main.cpp" />
 		<Unit filename="resources.rc">
 			<Option compilerVar="WINDRES" />
