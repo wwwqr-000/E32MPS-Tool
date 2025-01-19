@@ -114,6 +114,32 @@ deletedFiles filesGotDeleted(const std::vector<std::string>& files, const std::v
     return deletedFiles(deletedFilesVec.size() > 0, deletedFilesVec);
 }
 
+void theGreatEscape(std::string& content) {
+    replaceStr(content, "\\n", "\\\n");
+    replaceStr(content, "\\t", "\\\t");
+    replaceStr(content, "\\r", "\\\r");
+    replaceStr(content, "\\b", "\\\b");
+    replaceStr(content, "\\f", "\\\f");
+    replaceStr(content, "\\v", "\\\v");
+    replaceStr(content, "\\\\", "\\\\\\");
+    replaceStr(content, "\\\"", "\\\\\"");
+    replaceStr(content, "\\\'", "\\\\\'");
+    replaceStr(content, "\n", "\\n");
+    replaceStr(content, "\t", "\\t");
+    replaceStr(content, "\r", "\\r");
+    replaceStr(content, "\b", "\\b");
+    replaceStr(content, "\f", "\\f");
+    replaceStr(content, "\v", "\\v");
+    replaceStr(content, "\'", "\\'");
+    replaceStr(content, "\"", "\\\"");
+}
+
+void couldNotSendToCOM(const std::string& serPort, const std::string& buff) {
+    cls();
+    std::cout << "Could not send command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
+    wait();
+}
+
 int main() {
     //echo f = open('test.txt', 'w'); f.write('test123'); f.close(); > COMx
     std::string dllName = "whiteavocado64.dll";
@@ -176,7 +202,19 @@ int main() {
         //Check for deleted files or folders
         deletedFiles delFiles = filesGotDeleted(files, prevFiles);
         if (delFiles.deleted()) {
-            std::cout << "Files got deleted...\n";
+            //Send command to delete files on esp32
+            //std::cout << delFiles.files()[0] << "\n";
+            for (std::string f : delFiles.files()) {
+                theGreatEscape(f);
+                std::string delCmd = "import uos; uos.remove('" + f + "');";
+                //std::cout << delCmd << "\n";
+                if (!sendCommandUsingFile(delCmd, serPort, buff)) {
+                    couldNotSendToCOM(serPort, buff);
+                    return 3;
+                }
+            }
+            //
+            //std::cout << "Files got deleted...\n";
         }
         //
 
@@ -216,23 +254,7 @@ int main() {
                 }
 
                 //Escape escaping
-                replaceStr(fileContents, "\\n", "\\\n");
-                replaceStr(fileContents, "\\t", "\\\t");
-                replaceStr(fileContents, "\\r", "\\\r");
-                replaceStr(fileContents, "\\b", "\\\b");
-                replaceStr(fileContents, "\\f", "\\\f");
-                replaceStr(fileContents, "\\v", "\\\v");
-                replaceStr(fileContents, "\\\\", "\\\\\\");
-                replaceStr(fileContents, "\\\"", "\\\\\"");
-                replaceStr(fileContents, "\\\'", "\\\\\'");
-                replaceStr(fileContents, "\n", "\\n");
-                replaceStr(fileContents, "\t", "\\t");
-                replaceStr(fileContents, "\r", "\\r");
-                replaceStr(fileContents, "\b", "\\b");
-                replaceStr(fileContents, "\f", "\\f");
-                replaceStr(fileContents, "\v", "\\v");
-                replaceStr(fileContents, "\'", "\\'");
-                replaceStr(fileContents, "\"", "\\\"");
+                theGreatEscape(fileContents);
                 //
 
                 cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
@@ -244,16 +266,14 @@ int main() {
             //std::cout << cmd << "\n";
 
             if (!sendCommandUsingFile(cmd, serPort, buff)) {
-                cls();
-                std::cout << "Could not send command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
-                wait();
-                return 2;
+                couldNotSendToCOM(serPort, buff);
+                return 4;
             }
 
             file.close();
         }
         std::time_t now = std::time(nullptr);
         std::tm* localTime = std::localtime(&now);
-        //std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
+        std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
     }
 }

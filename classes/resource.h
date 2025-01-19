@@ -2,6 +2,7 @@
 #define HEADER_F3981DF9877E70B8
 
 #define ASSET_WHITEAVOCADO_DLL 1
+#define ASSET_ICON 2
 
 #endif // header guard
 

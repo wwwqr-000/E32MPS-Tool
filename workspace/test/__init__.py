@@ -1,5 +1,5 @@
-def startupTest():
-    print("This is a startup test, to check if everything works.")
-    marf = "kas"
-    print(f"marf{ marf }")
+def welcome():
+    name = "E32MPS-Tool"
+    print(f"Thanks for downloading the { name }!")
     
+print('I got \'imported!\' successfully')

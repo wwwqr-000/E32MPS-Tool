@@ -4,3 +4,6 @@ E32MPS-Tool.depend
 obj/Debug/main.o
 obj/Debug/resources.res
 buff.cache
+bin/Release/E32MPS-Tool.exe
+obj/Release/main.o
+obj/Release/resources.res

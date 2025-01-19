@@ -1,3 +1,34 @@
 #include "classes/resource.h"
 
 ASSET_WHITEAVOCADO_DLL RCDATA "data/whiteavocado64.dll"
+ASSET_ICON ICON "data/icon.ico"
+
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x4L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName", "whiteavocado\0"
+            VALUE "FileDescription", "Sync files with esp32\0"
+            VALUE "FileVersion", "1.0.0.0\0"
+            VALUE "InternalName", "E32MPS-Tool.exe\0"
+            VALUE "LegalCopyright", "wwwqr | whiteavocado\0"
+            VALUE "OriginalFilename", "E32MPS-Tool.exe\0"
+            VALUE "ProductName", "E32MPS-Tool\0"
+            VALUE "ProductVersion", "1.0.0.0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1252
+    END
+END
