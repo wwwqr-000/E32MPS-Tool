@@ -51,6 +51,24 @@ bool sendCmd(const std::string& cmd, const std::string& port, std::string& buff)
     return false;
 }
 
+bool sendCommands(const std::vector<std::string>& commands, const std::string& port, std::string& buff) {
+    std::ofstream file("buff.cache");
+    if (!file.is_open()) {
+        return false;
+    }
+
+    for (std::string cmd : commands) {
+        file << cmd + "\n";
+    }
+
+    file.close();
+
+    dllMethods.quietShell(("for /f \"usebackq delims=\" %a in (buff.cache) do @echo %a > COM" + port).c_str(), buff);
+    createUsefulBuff(buff);
+    if (buff == "") { return true; }
+    return false;
+}
+
 int main() {
     //echo f = open('test.txt', 'w'); f.write('test123'); f.close(); > COMx
     std::string dllName = "whiteavocado64.dll";
@@ -91,7 +109,7 @@ int main() {
             continue;
         }
 
-        std::string lines = buff;
+        std::string lines = buff + "\n";// \n is added, to recieve the last item from the buff
         buff = "";
 
         std::string tmpLine = "";
@@ -108,7 +126,10 @@ int main() {
             tmpLine += c;
         }
 
+        std::vector<std::string> commands;
+
         for (std::string& filePath : files) {
+            sendCommands(commands, serPort, buff);
             std::string realFilePath = "./workspace/" + filePath;
             std::string fileContents = "";
             bool isFolder = false;
@@ -124,7 +145,7 @@ int main() {
                     }
                 }
                 if (invertedFolderCheck) {
-                    std::cout << filePath << " is a folder...\n";
+                    //std::cout << filePath << " is a folder...\n";
                     isFolder = true;
                 }
                 else {
@@ -165,15 +186,11 @@ int main() {
                 cmd = "import uos; uos.mkdir('" + filePath + "')";
             }
 
-            std::cout << cmd << "\n";
-            if (!sendCmd(cmd, serPort, buff)) {
-                cls();
-                std::cout << "Could not finish test command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
-                wait();
-                return 2;
-            }
-
             file.close();
+
+            std::cout << cmd << "\n";
+
+            commands.push_back(cmd);
         }
     }
 }
