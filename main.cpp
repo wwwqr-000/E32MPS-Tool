@@ -121,6 +121,7 @@ void theGreatEscape(std::string& content) {
     replaceStr(content, "\\b", "\\\b");
     replaceStr(content, "\\f", "\\\f");
     replaceStr(content, "\\v", "\\\v");
+    replaceStr(content, R"(\\x)", R"(\\\x)");
     replaceStr(content, "\\\\", "\\\\\\");
     replaceStr(content, "\\\"", "\\\\\"");
     replaceStr(content, "\\\'", "\\\\\'");
@@ -130,6 +131,7 @@ void theGreatEscape(std::string& content) {
     replaceStr(content, "\b", "\\b");
     replaceStr(content, "\f", "\\f");
     replaceStr(content, "\v", "\\v");
+    replaceStr(content, R"(\x)", R"(\\x)");
     replaceStr(content, "\'", "\\'");
     replaceStr(content, "\"", "\\\"");
 }
