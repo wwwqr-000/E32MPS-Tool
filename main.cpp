@@ -155,14 +155,16 @@ int main() {
                 while (std::getline(file, tmpLine)) {
                     fileContents += tmpLine + "\n";
                 }
+
+                //W.I.P (format fileContents string so \n is \\n and \t is \\t, etc...)
+
                 cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
-                std::cout << fileContents << "\n";
             }
             else {
                 cmd = "import uos; uos.mkdir('" + filePath + "')";
             }
 
-            //std::cout << cmd << "\n";
+            std::cout << cmd << "\n";
 
             if (!sendCommandUsingFile(cmd, serPort, buff)) {
                 cls();
