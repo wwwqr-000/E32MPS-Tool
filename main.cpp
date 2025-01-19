@@ -173,14 +173,13 @@ int main() {
     std::cout << "Connected to device trough COM" << serPort << ".\n\n";
 
     std::vector<std::string> prevFiles;//Files from prev loop
+    std::string shitBuff = "";
+    dllMethods.quietShell("mkdir workspace", shitBuff);
+    shitBuff = "";
 
     while (true) {
         dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
         createUsefulBuff(buff);
-        if (buff == "File Not Found") {
-            system("mkdir workspace");
-            continue;
-        }
 
         std::string lines = buff + "\n";// \n is added, to recieve the last item from the buff
         buff = "";
