@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
+#include <string>
 
 #include "classes/resource.h"
 #include "classes/dllmethods.hpp"
@@ -64,6 +65,14 @@ bool sendCommandUsingFile(std::string& cmd, const std::string& port, std::string
     createUsefulBuff(buff);
     if (buff == "") { return true; }
     return false;
+}
+
+void replaceStr(std::string &str, std::string oldSubstring, std::string newSubstring) {
+    size_t pos = 0;
+    while ((pos = str.find(oldSubstring, pos)) != std::string::npos) {
+        str.replace(pos, oldSubstring.length(), newSubstring);
+        pos += newSubstring.length();
+    }
 }
 
 int main() {
@@ -156,7 +165,25 @@ int main() {
                     fileContents += tmpLine + "\n";
                 }
 
-                //W.I.P (format fileContents string so \n is \\n and \t is \\t, etc...)
+                //Escape escaping
+                replaceStr(fileContents, "\\n", "\\\n");
+                replaceStr(fileContents, "\\t", "\\\t");
+                replaceStr(fileContents, "\\r", "\\\r");
+                replaceStr(fileContents, "\\b", "\\\b");
+                replaceStr(fileContents, "\\f", "\\\f");
+                replaceStr(fileContents, "\\v", "\\\v");
+                replaceStr(fileContents, "\\\\", "\\\\\\");
+                replaceStr(fileContents, "\\\"", "\\\\\"");
+                replaceStr(fileContents, "\\\'", "\\\\\'");
+                replaceStr(fileContents, "\n", "\\n");
+                replaceStr(fileContents, "\t", "\\t");
+                replaceStr(fileContents, "\r", "\\r");
+                replaceStr(fileContents, "\b", "\\b");
+                replaceStr(fileContents, "\f", "\\f");
+                replaceStr(fileContents, "\v", "\\v");
+                replaceStr(fileContents, "\'", "\\'");
+                replaceStr(fileContents, "\"", "\\\"");
+                //
 
                 cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
             }
