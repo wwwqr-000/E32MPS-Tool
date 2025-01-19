@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <fstream>
 #include <vector>
+#include <ctime>
 
 #include "classes/resource.h"
 #include "classes/dllmethods.hpp"
@@ -51,18 +52,14 @@ bool sendCmd(const std::string& cmd, const std::string& port, std::string& buff)
     return false;
 }
 
-bool sendCommands(const std::vector<std::string>& commands, const std::string& port, std::string& buff) {
+bool sendCommandUsingFile(std::string& cmd, const std::string& port, std::string& buff) {
     std::ofstream file("buff.cache");
     if (!file.is_open()) {
         return false;
     }
 
-    for (std::string cmd : commands) {
-        file << cmd + "\n";
-    }
-
+    file << cmd << "\n";
     file.close();
-
     dllMethods.quietShell(("for /f \"usebackq delims=\" %a in (buff.cache) do @echo %a > COM" + port).c_str(), buff);
     createUsefulBuff(buff);
     if (buff == "") { return true; }
@@ -126,10 +123,7 @@ int main() {
             tmpLine += c;
         }
 
-        std::vector<std::string> commands;
-
         for (std::string& filePath : files) {
-            sendCommands(commands, serPort, buff);
             std::string realFilePath = "./workspace/" + filePath;
             std::string fileContents = "";
             bool isFolder = false;
@@ -159,38 +153,28 @@ int main() {
 
             if (!isFolder) {//Get content out of file
                 while (std::getline(file, tmpLine)) {
-                    std::string realTmpLine = "";
-                    int charIndex = -1;
-                    for (char& c : tmpLine) {
-                        ++charIndex;
-                        bool newLnFound = false;
-                        if (c == '\n') {
-                            try {//If this \n really is the last char of the line
-                                char test = tmpLine[charIndex + 1];
-                            }
-                            catch (std::exception) {
-                                realTmpLine += "; ";
-                                continue;
-                            }
-                        }
-                        else {
-                            realTmpLine += c;
-                        }
-
-                    }
-                    fileContents += realTmpLine;
+                    fileContents += tmpLine + "\n";
                 }
                 cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
+                std::cout << fileContents << "\n";
             }
             else {
                 cmd = "import uos; uos.mkdir('" + filePath + "')";
             }
 
+            //std::cout << cmd << "\n";
+
+            if (!sendCommandUsingFile(cmd, serPort, buff)) {
+                cls();
+                std::cout << "Could not send command on COM" << serPort << ": " << buff << "\n\nPress enter to exit\n";
+                wait();
+                return 2;
+            }
+
             file.close();
-
-            std::cout << cmd << "\n";
-
-            commands.push_back(cmd);
         }
+        std::time_t now = std::time(nullptr);
+        std::tm* localTime = std::localtime(&now);
+        //std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
     }
 }
