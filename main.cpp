@@ -175,9 +175,9 @@ int main() {
     std::cout << "Connected to device trough COM" << serPort << ".\n\n";
 
     std::vector<std::string> prevFiles;//Files from prev loop
-    std::string shitBuff = "";
-    dllMethods.quietShell("mkdir workspace", shitBuff);
-    shitBuff = "";
+    std::string cacheBuff = "";
+    dllMethods.quietShell("mkdir workspace", cacheBuff);
+    cacheBuff = "";
 
     dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
     createUsefulBuff(buff);
@@ -266,6 +266,16 @@ int main() {
 
         //std::cout << cmd << "\n";
 
+        //Timeout to give esp32 time to write the file
+        size_t fileSize = strlen(fileContents.c_str());
+        if (fileSize > 3000) {
+            Sleep(3500);
+        }
+        else {
+            Sleep(fileSize / 10);
+        }
+        //
+
         if (!sendCommandUsingFile(cmd, serPort, buff)) {
             couldNotSendToCOM(serPort, buff);
             return 4;
@@ -273,6 +283,9 @@ int main() {
 
         file.close();
     }
+    dllMethods.quietShell("del buff.cache", buff);
+    buff = "";
+    cacheBuff = "";
     std::time_t now = std::time(nullptr);
     std::tm* localTime = std::localtime(&now);
     std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
