@@ -321,7 +321,7 @@ int main() {
             //Timeout to give esp32 time to write the file
             size_t fileSize = strlen(fileContents.c_str());
             if (fileSize > 3000) {
-                Sleep(3500);
+                Sleep(1500);
             }
             else {
                 Sleep(fileSize / 10);
