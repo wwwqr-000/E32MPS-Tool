@@ -54,14 +54,54 @@ bool sendCmd(const std::string& cmd, const std::string& port, std::string& buff)
     return false;
 }
 
-bool sendCommandUsingFile(std::string& cmd, const std::string& port, std::string& buff) {
+bool sendCommandUsingFile(std::string& cmd, const std::string& port, std::string& buff, std::string targetFile) {
     std::ofstream file("buff.cache");
     if (!file.is_open()) {
         return false;
     }
 
-    file << cmd << "\n";
-    file.close();
+    if (targetFile != "") {//Cmd becomes the contents of the file.
+        std::vector<std::string> lines;
+        int num = -1;
+        int index = 0;
+        bool firstTime = true;
+        for (char& c : cmd) {
+            ++num;
+            if (num % 5000 == 0 && !firstTime) {
+                ++index;
+            }
+
+            lines[index] += c;
+            if (firstTime) { firstTime = false; }
+        }
+
+        num = 0;
+        index = 0;
+        for (std::string l : lines) {
+            ++num;
+            file << "b" << num << " = '" << l << "'\n"
+        }
+
+        file << "f = open('" + targetFile + "', 'w'); f.write("
+
+        std::string delStr = "";
+        for (int x = 0; x < num; x++) {
+            if (x != 0) {
+                file << " ";
+            }
+            file << "b" << (x + 1);
+            delStr += "";
+            if (x != (num - 1)) {
+                file << " +";
+            }
+        }
+
+        file << "); "
+    }
+    else {
+        file << cmd << "\n";
+        file.close();
+    }
     dllMethods.quietShell(("for /f \"usebackq delims=\" %a in (buff.cache) do @echo %a > COM" + port).c_str(), buff);
     createUsefulBuff(buff);
     if (buff == "") { return true; }
@@ -246,6 +286,7 @@ int main() {
             //
         }
 
+        std::string cmdTargetFile = "";
         std::string cmd = "";
 
         if (!isFolder) {//Get content out of file
@@ -257,7 +298,8 @@ int main() {
             theGreatEscape(fileContents);
             //
 
-            cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
+            cmdTargetFile = filePath;
+            cmd = fileContents;
         }
         else {
             if (filePath == "") { continue; }
@@ -276,7 +318,7 @@ int main() {
         }
         //
 
-        if (!sendCommandUsingFile(cmd, serPort, buff)) {
+        if (!sendCommandUsingFile(cmd, serPort, buff, cmdTargetFile)) {
             couldNotSendToCOM(serPort, buff);
             return 4;
         }
