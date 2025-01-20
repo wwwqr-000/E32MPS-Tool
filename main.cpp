@@ -179,102 +179,101 @@ int main() {
     dllMethods.quietShell("mkdir workspace", shitBuff);
     shitBuff = "";
 
-    while (true) {
-        dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
-        createUsefulBuff(buff);
+    dllMethods.quietShell("cd workspace && powershell \"Get-ChildItem -Recurse | ForEach-Object { $_.FullName.Substring($pwd.Path.Length + 1) }\"", buff);
+    createUsefulBuff(buff);
 
-        std::string lines = buff + "\n";// \n is added, to recieve the last item from the buff
-        buff = "";
+    std::string lines = buff + "\n";// \n is added, to recieve the last item from the buff
+    buff = "";
 
-        std::string tmpLine = "";
-        std::vector<std::string> files;
-        for (char& c : lines) {
-            if (c == '\n') {
-                files.push_back(tmpLine);
-                tmpLine = "";
-                continue;
-            }
-            if (c == '\\') {
-                c = '/';
-            }
-            tmpLine += c;
+    std::string tmpLine = "";
+    std::vector<std::string> files;
+    for (char& c : lines) {
+        if (c == '\n') {
+            files.push_back(tmpLine);
+            tmpLine = "";
+            continue;
         }
+        if (c == '\\') {
+            c = '/';
+        }
+        tmpLine += c;
+    }
 
-        //Check for deleted files or folders
-        deletedFiles delFiles = filesGotDeleted(files, prevFiles);
-        if (delFiles.deleted()) {
-            //Send command to delete files on esp32
-            //std::cout << delFiles.files()[0] << "\n";
-            for (std::string f : delFiles.files()) {
-                theGreatEscape(f);
-                std::string delCmd = "import uos; uos.remove('" + f + "');";
-                //std::cout << delCmd << "\n";
-                if (!sendCommandUsingFile(delCmd, serPort, buff)) {
-                    couldNotSendToCOM(serPort, buff);
-                    return 3;
-                }
+    //Check for deleted files or folders
+    deletedFiles delFiles = filesGotDeleted(files, prevFiles);
+    if (delFiles.deleted()) {
+        //Send command to delete files on esp32
+        //std::cout << delFiles.files()[0] << "\n";
+        for (std::string f : delFiles.files()) {
+            theGreatEscape(f);
+            std::string delCmd = "import uos; uos.remove('" + f + "');";
+            //std::cout << delCmd << "\n";
+            if (!sendCommandUsingFile(delCmd, serPort, buff)) {
+                couldNotSendToCOM(serPort, buff);
+                return 3;
             }
-            //
-            //std::cout << "Files got deleted...\n";
         }
         //
+        //std::cout << "Files got deleted...\n";
+    }
+    //
 
-        prevFiles = files;
+    prevFiles = files;
 
-        for (std::string& filePath : files) {
-            std::string realFilePath = "./workspace/" + filePath;
-            std::string fileContents = "";
-            bool isFolder = false;
-            tmpLine = "";
-            std::ifstream file(realFilePath);
-            if (!file.is_open()) {
-                bool invertedFolderCheck = true;
-                //Check if 'file' is folder
-                for (char& c : filePath) {
-                    if (c == '.') {
-                        invertedFolderCheck = false;
-                        break;
-                    }
+    for (std::string& filePath : files) {
+        std::string realFilePath = "./workspace/" + filePath;
+        std::string fileContents = "";
+        bool isFolder = false;
+        tmpLine = "";
+        std::ifstream file(realFilePath);
+        if (!file.is_open()) {
+            bool invertedFolderCheck = true;
+            //Check if 'file' is folder
+            for (char& c : filePath) {
+                if (c == '.') {
+                    invertedFolderCheck = false;
+                    break;
                 }
-                if (invertedFolderCheck) {
-                    //std::cout << filePath << " is a folder...\n";
-                    isFolder = true;
-                }
-                else {
-                    std::cout << "Could not open file " << realFilePath << ". Skipping...\n";
-                    continue;
-                }
-                //
             }
-
-            std::string cmd = "";
-
-            if (!isFolder) {//Get content out of file
-                while (std::getline(file, tmpLine)) {
-                    fileContents += tmpLine + "\n";
-                }
-
-                //Escape escaping
-                theGreatEscape(fileContents);
-                //
-
-                cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
+            if (invertedFolderCheck) {
+                //std::cout << filePath << " is a folder...\n";
+                isFolder = true;
             }
             else {
-                cmd = "import uos; uos.mkdir('" + filePath + "')";
+                std::cout << "Could not open file " << realFilePath << ". Skipping...\n";
+                continue;
             }
-
-            //std::cout << cmd << "\n";
-
-            if (!sendCommandUsingFile(cmd, serPort, buff)) {
-                couldNotSendToCOM(serPort, buff);
-                return 4;
-            }
-
-            file.close();
+            //
         }
-        std::time_t now = std::time(nullptr);
-        std::tm* localTime = std::localtime(&now);
-        std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
+
+        std::string cmd = "";
+
+        if (!isFolder) {//Get content out of file
+            while (std::getline(file, tmpLine)) {
+                fileContents += tmpLine + "\n";
+            }
+
+            //Escape escaping
+            theGreatEscape(fileContents);
+            //
+
+            cmd = "f = open('" + filePath + "', 'w'); f.write('" + fileContents + "'); f.close();";
+        }
+        else {
+            if (filePath == "") { continue; }
+            cmd = "import uos; uos.mkdir('" + filePath + "')";
+        }
+
+        //std::cout << cmd << "\n";
+
+        if (!sendCommandUsingFile(cmd, serPort, buff)) {
+            couldNotSendToCOM(serPort, buff);
+            return 4;
+        }
+
+        file.close();
     }
+    std::time_t now = std::time(nullptr);
+    std::tm* localTime = std::localtime(&now);
+    std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
 }
