@@ -19,12 +19,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "whiteavocado\0"
             VALUE "FileDescription", "Sync files with esp32\0"
-            VALUE "FileVersion", "1.0.0.0\0"
+            VALUE "FileVersion", "1.3.0.0\0"
             VALUE "InternalName", "E32MPS-Tool.exe\0"
             VALUE "LegalCopyright", "wwwqr | whiteavocado\0"
             VALUE "OriginalFilename", "E32MPS-Tool.exe\0"
             VALUE "ProductName", "E32MPS-Tool\0"
-            VALUE "ProductVersion", "1.0.0.0\0"
+            VALUE "ProductVersion", "1.3.0.0\0"
         END
     END
     BLOCK "VarFileInfo"
