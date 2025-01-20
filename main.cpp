@@ -191,6 +191,25 @@ void couldNotSendToCOM(const std::string& serPort, const std::string& buff) {
     wait();
 }
 
+void getPInt(std::string question, size_t& res) {
+    while (true) {
+        std::string out = "";
+        cls();
+        std::cout << question;
+        std::cin >> out;
+
+        try {
+            res = std::stoi(out);
+        }
+        catch (std::exception) {
+            cls();
+            std::cout << "Given input is not a valid positive number. Press enter to try again.\n";
+            wait();
+        }
+        break;
+    }
+}
+
 int main() {
     //echo f = open('test.txt', 'w'); f.write('test123'); f.close(); > COMx
     std::string dllName = "whiteavocado64.dll";
@@ -207,9 +226,15 @@ int main() {
     HMODULE const DLL = LoadLibraryExA((tmpPath + dllName).c_str(), nullptr, 0);
     dllMethods = loadDllMethods(DLL);
 
-    std::string serPort = "";
-    std::cout << "What is the number of the COM port you want to connect with? (Example input: \"7\" for COM7)\n> ";
-    std::cin >> serPort;
+    size_t delaySeconds = 0;
+    getPInt("Enter the delay of doing a full sync in seconds.\n(0 is non-stop sync)\n> ", delaySeconds);
+
+    cls();
+
+    size_t serPortInt = 0;
+    getPInt("What is the number of the COM port you want to connect with? (Example input: \"7\" for COM7)\n> ", serPortInt);
+    std::string serPort = std::to_string(serPortInt);
+    cls();
     std::cout << "\nTrying to connect with COM" << serPort << "...\n";
 
     std::string cmd = "f = open('E32MPS.txt', 'w'); f.write('live file sync by E32MPS-Tool (https://github.com/wwwqr-000/E32MPS-Tool)'); f.close();";
@@ -341,5 +366,6 @@ int main() {
         std::time_t now = std::time(nullptr);
         std::tm* localTime = std::localtime(&now);
         std::cout << "Last updated: " << (localTime->tm_hour < 10 ? "0" : "") << localTime->tm_hour << ":" << (localTime->tm_min < 10 ? "0" : "") << localTime->tm_min << ":" << (localTime->tm_sec < 10 ? "0" : "") << localTime->tm_sec << "\n";
+        Sleep(delaySeconds * 1000);
     }
 }
